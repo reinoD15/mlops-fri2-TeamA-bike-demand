@@ -1,9 +1,9 @@
 # Team working agreement
 
-- Team and repository (`mlops-<session>-<team-name>-bike-demand`): ________
-- Members: ________
-- Current driver / reviewer / evidence recorder: ________
-- Fourth member's temporary responsibility, if applicable: ________
+- Team and repository : `TeamA` , repo:`mlops-fr2-TeamA-bike-demand`
+- Members: Alexandre, Nicolas, Thadée, Alban
+- Current driver : / reviewer :  / evidence recorder : 
+- Fourth member's temporary responsibility, if applicable: 
 
 ## Workflow
 
