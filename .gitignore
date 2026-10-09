@@ -1,0 +1,5 @@
+*.log
+*.py[cod]
+.Python
+env/
+build/
