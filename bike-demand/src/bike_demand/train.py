@@ -10,6 +10,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import yaml
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 
 from bike_demand.preflight import check_snapshot, sha256
@@ -45,26 +46,57 @@ def load_config(path: Path) -> dict:
 
 
 def select_features(frame: pd.DataFrame, features: list[str]) -> pd.DataFrame:
-    raise NotImplementedError(
-        "TODO(Week 1, Lab 2): select only the ordered predictors, excluding "
-        "labels and identities. See README 'Expected failures'."
-    )
+    """Select predictors in the required order without target leakage."""
+    from bike_demand.validate import FEATURES
+
+    forbidden = {"cnt", "casual", "registered", "instant", "dteday"}
+
+    if not features:
+        raise ValueError("features: list cannot be empty")
+
+    if len(features) != len(set(features)):
+        raise ValueError("features: duplicate columns")
+
+    if any(feature in forbidden for feature in features):
+        raise ValueError("features: forbidden predictors")
+
+    if features != list(FEATURES):
+        raise ValueError("features: incorrect predictor list or order")
+
+    missing = [feature for feature in features if feature not in frame.columns]
+    if missing:
+        raise ValueError(f"features: missing columns {missing}")
+
+    return frame.loc[:, features].copy()
 
 
 def compare_mean(
     train_target: pd.Series, validation_target: pd.Series
 ) -> tuple[float, float]:
-    raise NotImplementedError(
-        "TODO(Week 1, Lab 2): fit the comparator on training targets and "
-        "compute validation MAE. See README 'Expected failures'."
-    )
+    """Calculate the naive (average) prediction and the MAE on the validation set"""
+    mean_prediction = float(train_target.mean())
+    predictions = np.full(shape=validation_target.shape, fill_value=mean_prediction)
+    mae = float(mean_absolute_error(validation_target, predictions))
+    return mean_prediction, mae
 
 
 def fit_evaluate(train: pd.DataFrame, validation: pd.DataFrame, config: dict):
-    raise NotImplementedError(
-        "TODO(Week 1, Lab 2): fit the RF on train and evaluate only on "
-        "validation rows. See README 'Expected failures'."
-    )
+    """Entraîne le Random Forest et évalue sur les données de validation."""
+    features = config["features"]
+
+    X_train = select_features(train, features)
+    y_train = train["cnt"]
+
+    X_val = select_features(validation, features)
+    y_val = validation["cnt"]
+
+    model = RandomForestRegressor(**config["model"])
+    model.fit(X_train, y_train)
+
+    predictions = model.predict(X_val)
+    mae = float(mean_absolute_error(y_val, predictions))
+
+    return model, predictions, mae
 
 
 def reload_validation(
