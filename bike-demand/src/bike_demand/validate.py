@@ -36,10 +36,35 @@ COUNTS = ("cnt", "casual", "registered")
 
 
 def check_domains(frame: pd.DataFrame) -> None:
-    raise NotImplementedError(
-        "TODO(Week 1, Lab 2): validate domains, finite ranges and date "
-        "windows. See README 'Expected failures'."
-    )
+    for column, (minimum, maximum) in DOMAINS.items():
+        values = frame[column]
+        if not np.isfinite(values).all():
+            raise ValueError(f"{column}: values must be finite")
+        if not ((values >= minimum) & (values <= maximum) & (values % 1 == 0)).all():
+            raise ValueError(f"{column}: values outside allowed domain")
+
+    for column in NORMALISED:
+        values = frame[column]
+        if not np.isfinite(values).all():
+            raise ValueError(f"{column}: values must be finite")
+        if not values.between(0, 1).all():
+            raise ValueError(f"{column}: values must be between 0 and 1")
+
+    for column in COUNTS:
+        values = frame[column]
+        if not np.isfinite(values).all():
+            raise ValueError(f"{column}: values must be finite")
+        if not ((values >= 0) & (values % 1 == 0)).all():
+            raise ValueError(f"{column}: counts must be non-negative integers")
+
+    if not (frame["casual"] + frame["registered"] == frame["cnt"]).all():
+        raise ValueError("cnt: must equal casual + registered")
+
+    dates = frame["dteday"]
+    if dates.isna().any():
+        raise ValueError("dteday: invalid dates")
+    if not dates.between(pd.Timestamp("2011-01-01"), pd.Timestamp("2012-12-31")).all():
+        raise ValueError("dteday: dates outside expected window")
 
 
 def load_data(path: Path | str) -> pd.DataFrame:
