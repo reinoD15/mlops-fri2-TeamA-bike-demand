@@ -10,10 +10,42 @@ WINDOWS = {
 
 
 def split_data(frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    raise NotImplementedError(
-        "TODO(Week 1, Lab 2): assign sorted, nonempty, disjoint and "
-        "complete partitions. See README 'Expected failures'."
-    )
+    if frame.empty:
+        raise ValueError("Cannot split an empty dataset")
+
+    if "dteday" not in frame.columns:
+        raise ValueError("Missing dteday column")
+
+    dates = pd.to_datetime(frame["dteday"], errors="raise")
+
+    if dates.isna().any():
+        raise ValueError("dteday: missing dates")
+
+    partitions = {}
+
+    for name, (start, end) in WINDOWS.items():
+        mask = dates.between(pd.Timestamp(start), pd.Timestamp(end))
+
+        part = frame.loc[mask].copy()
+        part = part.sort_values(
+            by=["dteday", "hr"] if "hr" in part.columns else ["dteday"],
+            kind="stable",
+        )
+
+        if part.empty:
+            raise ValueError(f"{name}: partition must be nonempty")
+
+        partitions[name] = part
+
+    all_indices = [index for part in partitions.values() for index in part.index]
+
+    if len(all_indices) != len(frame):
+        raise ValueError("Partitions must provide complete coverage of input rows")
+
+    if len(set(all_indices)) != len(all_indices):
+        raise ValueError("Partitions overlap")
+
+    return partitions
 
 
 def partition_summary(partitions: dict[str, pd.DataFrame]) -> dict:
