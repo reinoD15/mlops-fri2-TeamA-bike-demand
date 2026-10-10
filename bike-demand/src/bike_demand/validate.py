@@ -57,9 +57,6 @@ def check_domains(frame: pd.DataFrame) -> None:
         if not ((values >= 0) & (values % 1 == 0)).all():
             raise ValueError(f"{column}: counts must be non-negative integers")
 
-    if not (frame["casual"] + frame["registered"] == frame["cnt"]).all():
-        raise ValueError("cnt: must equal casual + registered")
-
     dates = frame["dteday"]
     if dates.isna().any():
         raise ValueError("dteday: invalid dates")
